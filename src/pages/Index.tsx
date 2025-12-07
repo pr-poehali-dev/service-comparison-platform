@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 
 const mockExecutors = [
@@ -65,10 +66,52 @@ const mockOrders = [
   { id: 3, title: 'Редизайн мобильного приложения', status: 'Завершён', executor: 'Дмитрий Соколов', deadline: 'Выполнен' }
 ];
 
+const mockProposals = [
+  {
+    id: 1,
+    executorId: 1,
+    executorName: 'Алексей Иванов',
+    executorRating: 4.9,
+    executorAvatar: '',
+    price: 45000,
+    deadline: '14 дней',
+    description: 'Готов разработать полноценный интернет-магазин на React + Node.js с админ-панелью, интеграцией платежей и системой управления заказами.',
+    portfolio: 3
+  },
+  {
+    id: 2,
+    executorId: 3,
+    executorName: 'Дмитрий Соколов',
+    executorRating: 4.7,
+    executorAvatar: '',
+    price: 38000,
+    deadline: '18 дней',
+    description: 'Создам современный магазин с акцентом на UX/UI. Адаптивный дизайн, быстрая загрузка, интуитивная навигация.',
+    portfolio: 5
+  },
+  {
+    id: 3,
+    executorId: 2,
+    executorName: 'Мария Петрова',
+    executorRating: 4.8,
+    executorAvatar: '',
+    price: 52000,
+    deadline: '12 дней',
+    description: 'Разработаю магазин с 3D-превью товаров. Уникальная визуализация продукции повысит конверсию.',
+    portfolio: 2
+  }
+];
+
 export default function Index() {
   const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExecutor, setSelectedExecutor] = useState<number | null>(null);
+  const [catalogView, setCatalogView] = useState<'order' | 'executors'>('order');
+  const [orderTitle, setOrderTitle] = useState('');
+  const [orderDescription, setOrderDescription] = useState('');
+  const [orderBudget, setOrderBudget] = useState('');
+  const [orderDeadline, setOrderDeadline] = useState('');
+  const [showProposals, setShowProposals] = useState(false);
 
   const filteredExecutors = mockExecutors.filter(executor =>
     executor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -233,85 +276,247 @@ export default function Index() {
 
         {activeTab === 'catalog' && (
           <div className="animate-fade-in space-y-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="relative flex-1 w-full">
-                <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
-                <Input
-                  placeholder="Поиск по имени или специальности..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Select>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Специальность" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="web">Веб-разработка</SelectItem>
-                  <SelectItem value="3d">3D-моделирование</SelectItem>
-                  <SelectItem value="design">UI/UX дизайн</SelectItem>
-                  <SelectItem value="legal">Юридическое</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Сортировка" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rating">По рейтингу</SelectItem>
-                  <SelectItem value="price-asc">Цена: возрастание</SelectItem>
-                  <SelectItem value="price-desc">Цена: убывание</SelectItem>
-                  <SelectItem value="reviews">По отзывам</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Tabs value={catalogView} onValueChange={(v) => setCatalogView(v as 'order' | 'executors')} className="w-full">
+              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+                <TabsTrigger value="order">Разместить заказ</TabsTrigger>
+                <TabsTrigger value="executors">Найти исполнителя</TabsTrigger>
+              </TabsList>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              {filteredExecutors.map((executor) => (
-                <Card
-                  key={executor.id}
-                  className={`p-6 space-y-4 cursor-pointer transition-all hover:shadow-xl ${
-                    selectedExecutor === executor.id ? 'ring-2 ring-primary' : ''
-                  }`}
-                  onClick={() => setSelectedExecutor(executor.id)}
-                >
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={executor.avatar} />
-                      <AvatarFallback className="text-lg">
-                        {executor.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-xl font-semibold">{executor.name}</h3>
-                        {executor.verified && <Icon name="BadgeCheck" className="text-primary" size={20} />}
+              <TabsContent value="order" className="space-y-6">
+                {!showProposals ? (
+                  <Card className="p-8 max-w-3xl mx-auto">
+                    <div className="space-y-6">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-2">Опишите ваш проект</h2>
+                        <p className="text-muted-foreground">Заполните форму, и исполнители пришлют свои предложения с ценами</p>
                       </div>
-                      <p className="text-muted-foreground">{executor.specialty}</p>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Icon name="Star" className="text-yellow-500 fill-yellow-500" size={16} />
-                          <span className="font-semibold">{executor.rating}</span>
-                          <span className="text-muted-foreground">({executor.reviews})</span>
+
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Название проекта</label>
+                          <Input
+                            placeholder="Например: Разработка интернет-магазина"
+                            value={orderTitle}
+                            onChange={(e) => setOrderTitle(e.target.value)}
+                          />
                         </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Icon name="Briefcase" size={16} />
-                          <span>{executor.projects} проектов</span>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Описание задачи</label>
+                          <Textarea
+                            placeholder="Подробно опишите, что нужно сделать, какие функции должны быть, какой результат вы ожидаете..."
+                            className="min-h-[150px]"
+                            value={orderDescription}
+                            onChange={(e) => setOrderDescription(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Бюджет</label>
+                            <Input
+                              placeholder="Например: 50000"
+                              value={orderBudget}
+                              onChange={(e) => setOrderBudget(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Срок выполнения</label>
+                            <Input
+                              placeholder="Например: 2 недели"
+                              value={orderDeadline}
+                              onChange={(e) => setOrderDeadline(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Категория</label>
+                          <Select>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите категорию" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="web">Веб-разработка</SelectItem>
+                              <SelectItem value="3d">3D-моделирование</SelectItem>
+                              <SelectItem value="design">UI/UX дизайн</SelectItem>
+                              <SelectItem value="legal">Юридическое</SelectItem>
+                              <SelectItem value="marketing">Маркетинг</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
+
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={() => setShowProposals(true)}
+                        disabled={!orderTitle || !orderDescription}
+                      >
+                        <Icon name="Send" size={20} className="mr-2" />
+                        Опубликовать заказ
+                      </Button>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t">
+                  </Card>
+                ) : (
+                  <div className="space-y-6">
+                    <Card className="p-6 bg-primary/5 border-primary/20">
+                      <div className="flex items-start gap-4">
+                        <Icon name="CheckCircle2" className="text-primary flex-shrink-0" size={32} />
+                        <div className="space-y-2">
+                          <h3 className="text-xl font-semibold">Заказ опубликован!</h3>
+                          <p className="text-muted-foreground">
+                            {orderTitle}
+                          </p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowProposals(false)}
+                          >
+                            Изменить заказ
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+
                     <div>
-                      <p className="text-sm text-muted-foreground">Стоимость проекта</p>
-                      <p className="text-lg font-semibold text-primary">{executor.price} ₽</p>
+                      <h3 className="text-2xl font-bold mb-4">Предложения от исполнителей ({mockProposals.length})</h3>
+                      <div className="space-y-4">
+                        {mockProposals.map((proposal) => (
+                          <Card key={proposal.id} className="p-6 hover:shadow-lg transition-shadow">
+                            <div className="flex items-start gap-4">
+                              <Avatar className="h-16 w-16">
+                                <AvatarImage src={proposal.executorAvatar} />
+                                <AvatarFallback className="text-lg">
+                                  {proposal.executorName.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-3">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h4 className="text-lg font-semibold">{proposal.executorName}</h4>
+                                      <Icon name="BadgeCheck" className="text-primary" size={18} />
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm">
+                                      <div className="flex items-center gap-1">
+                                        <Icon name="Star" className="text-yellow-500 fill-yellow-500" size={14} />
+                                        <span className="font-medium">{proposal.executorRating}</span>
+                                      </div>
+                                      <span className="text-muted-foreground">•</span>
+                                      <div className="flex items-center gap-1 text-muted-foreground">
+                                        <Icon name="Briefcase" size={14} />
+                                        <span>{proposal.portfolio} проектов в портфолио</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-2xl font-bold text-primary">{proposal.price.toLocaleString('ru-RU')} ₽</p>
+                                    <p className="text-sm text-muted-foreground">Срок: {proposal.deadline}</p>
+                                  </div>
+                                </div>
+                                <p className="text-muted-foreground">{proposal.description}</p>
+                                <div className="flex gap-3 pt-2">
+                                  <Button>
+                                    <Icon name="MessageSquare" size={16} className="mr-2" />
+                                    Написать
+                                  </Button>
+                                  <Button variant="outline">
+                                    Посмотреть профиль
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
                     </div>
-                    <Button>Связаться</Button>
                   </div>
-                </Card>
-              ))}
-            </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="executors" className="space-y-6">
+                <div className="flex flex-col md:flex-row gap-4 items-center">
+                  <div className="relative flex-1 w-full">
+                    <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+                    <Input
+                      placeholder="Поиск по имени или специальности..."
+                      className="pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <Select>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                      <SelectValue placeholder="Специальность" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="web">Веб-разработка</SelectItem>
+                      <SelectItem value="3d">3D-моделирование</SelectItem>
+                      <SelectItem value="design">UI/UX дизайн</SelectItem>
+                      <SelectItem value="legal">Юридическое</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                      <SelectValue placeholder="Сортировка" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rating">По рейтингу</SelectItem>
+                      <SelectItem value="price-asc">Цена: возрастание</SelectItem>
+                      <SelectItem value="price-desc">Цена: убывание</SelectItem>
+                      <SelectItem value="reviews">По отзывам</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {filteredExecutors.map((executor) => (
+                    <Card
+                      key={executor.id}
+                      className={`p-6 space-y-4 cursor-pointer transition-all hover:shadow-xl ${
+                        selectedExecutor === executor.id ? 'ring-2 ring-primary' : ''
+                      }`}
+                      onClick={() => setSelectedExecutor(executor.id)}
+                    >
+                      <div className="flex items-start gap-4">
+                        <Avatar className="h-16 w-16">
+                          <AvatarImage src={executor.avatar} />
+                          <AvatarFallback className="text-lg">
+                            {executor.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xl font-semibold">{executor.name}</h3>
+                            {executor.verified && <Icon name="BadgeCheck" className="text-primary" size={20} />}
+                          </div>
+                          <p className="text-muted-foreground">{executor.specialty}</p>
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <Icon name="Star" className="text-yellow-500 fill-yellow-500" size={16} />
+                              <span className="font-semibold">{executor.rating}</span>
+                              <span className="text-muted-foreground">({executor.reviews})</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Icon name="Briefcase" size={16} />
+                              <span>{executor.projects} проектов</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Стоимость проекта</p>
+                          <p className="text-lg font-semibold text-primary">{executor.price} ₽</p>
+                        </div>
+                        <Button>Связаться</Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         )}
 
